@@ -1,0 +1,96 @@
+input, button, textarea, select, optgroup {
+    font: inherit;
+    color: inherit;
+    padding: 0;
+    margin: 0;
+    vertical-align: middle;
+}
+
+input, textarea {
+    resize: none;
+}
+
+button {
+    padding: 0;
+    color: inherit;
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+}
+
+img, picture, svg,
+audio, canvas, iframe, video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    vertical-align: top;
+    object-fit: cover;
+    overflow: hidden;
+}
+
+svg,
+svg path,
+svg circle,
+svg polygon,
+svg rect,
+svg line {
+    shape-rendering: geometricprecision;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+a:active,
+a:hover {
+    outline: 0;
+}
+
+a:not([class]) {
+    text-decoration-skip-ink: auto;
+}
+
+ul[role='list'],
+ol[role='list'],
+li {
+    list-style: none;
+    padding: 0;
+}
+
+body, h1, h2, h3, h4, h5, h6, p,
+ul, ol, dl, dd, figure, blockquote {
+    margin: 0;
+    font: inherit;
+
+}
+
+/* Box sizing rules
+============================================= */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+/* Reset margins and paddings
+============================================= */
+* {
+    margin: 0;
+    padding: 0;
+    outline: 0;
+}
+
+html,
+body:host {
+    -moz-text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    tab-size: 4;
+    -moz-tab-size: 4;
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+}
+
+

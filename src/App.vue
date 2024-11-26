@@ -1,47 +1,75 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
+import Main from './components/Main.vue'
+
 </script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
+  <header>
+    <div class="button-group">
+      <IconButton @click="handleBackClick">
+        <BackIcon />
+      </IconButton>
+      <IconButton @click="handleForwardClick">
+        <ForwardIcon />
+      </IconButton>
+      <IconButton @click="handleHeaderClick">
+        <Caps />
+      </IconButton>
+      <IconButton @click="handleParagraphClick">
+        <Text />
+      </IconButton>
+      <IconButton @click="handleImageUploadClick">
+        <ImageIcon />
+      </IconButton>
+      <TextButton @click="handleHtmlCopyClick">
+        Copy HTML
+      </TextButton>
     </div>
   </header>
 
   <main>
-    <TheWelcome />
+    <Main />
   </main>
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
-}
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-}
 </style>
+<script>
+import BackIcon from '@/components/icons/BackIcon.vue'
+import ForwardIcon from '@/components/icons/ForwardIcon.vue'
+import ImageIcon from '@/components/icons/ImageIcon.vue'
+
+import IconButton from '@/components/buttons/IconButton.vue'
+import TextButton from '@/components/buttons/TextButton.vue'
+
+export default {
+  components: {
+    IconButton,
+    TextButton,
+    BackIcon,
+    ForwardIcon,
+    ImageIcon
+  },
+  methods: {
+    handleBackClick() {
+      // Реализация функциональности кнопки "Назад"
+    },
+    handleForwardClick() {
+      // Реализация функциональности кнопки "Вперед"
+    },
+    handleHeaderClick() {
+      // Реализация функциональности кнопки "Заголовок"
+    },
+    handleParagraphClick() {
+      // Реализация функциональности кнопки "Абзац"
+    },
+    handleImageUploadClick() {
+      // Реализация функциональности кнопки "Загрузить картинку"
+    },
+    handleHtmlCopyClick() {
+      // Реализация функциональности кнопки "Копировать HTML"
+    }
+  }
+}
+</script>

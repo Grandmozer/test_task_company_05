@@ -1,10 +1,6 @@
 <template>
   <div>
     <div id="editorjs"></div>
-    <div class="controls">
-      <button @click="saveContent">Сохранить</button>
-      <button @click="clearContent">Очистить</button>
-    </div>
   </div>
 </template>
 
@@ -68,10 +64,4 @@ export default {
 </script>
 
 <style scoped>
-.controls {
-  margin-top: 10px;
-}
-button {
-  margin-right: 10px;
-}
 </style>
