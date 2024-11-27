@@ -1,17 +1,6 @@
-<script setup>
-defineProps({
-  icon: {
-    type: Object,
-    required: true
-  }
-})
-defineEmits(['click'])
-</script>
-
-
 <template>
   <button class="icon-btn" @click="$emit('click')">
-    <component :is="icon"/>
+    <slot></slot>
   </button>
 </template>
 
@@ -20,6 +9,9 @@ defineEmits(['click'])
   width: 42px;
   height: 38px;
   flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   border-radius: 4px;
   background: #282828;
 }
@@ -29,3 +21,11 @@ defineEmits(['click'])
   height: 24px;
 }
 </style>
+
+<script>
+export default {
+  name: 'IconButton',
+  emits: ['click']
+}
+
+</script>
