@@ -1,0 +1,7 @@
+/.idea
+!/.idea/icon.svg
+docker/data
+cache
+.DS_Store
+.vscode/
+node_modules/
