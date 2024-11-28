@@ -1,184 +1,205 @@
-
 <template>
-  <div class="p-4 max-w-4xl mx-auto">
-    <div class="flex space-x-2 mb-4">
-      <button @click="handleBackClick" class="p-2 bg-gray-200 rounded hover:bg-gray-300" title="Назад">
-        <Undo2 class="w-5 h-5" />
-      </button>
-      <button @click="handleForwardClick" class="p-2 bg-gray-200 rounded hover:bg-gray-300" title="Вперед">
-        <Redo2 class="w-5 h-5" />
-      </button>
-      <button @click="insertHeader" class="p-2 bg-gray-200 rounded hover:bg-gray-300" title="Заголовок">
-        <Heading2 class="w-5 h-5" />
-      </button>
-      <button @click="convertToParagraph" class="p-2 bg-gray-200 rounded hover:bg-gray-300" title="Абзац">
-        <Type class="w-5 h-5" />
-      </button>
-      <button @click="triggerImageUpload" class="p-2 bg-gray-200 rounded hover:bg-gray-300" title="Загрузить изображение">
-        <Image class="w-5 h-5" />
-      </button>
-      <button @click="handleHtmlCopyClick" class="p-2 bg-gray-200 rounded hover:bg-gray-300" title="Копировать HTML">
-        <Copy class="w-5 h-5" />
-      </button>
-      <input
-          type="file"
-          ref="imageInput"
-          @change="handleImageUpload"
-          accept="image/*"
-          class="hidden"
+  <div class="editor-container">
+    <header class="header button-group">
+      <button @click="handleBackClick" title="Назад">Назад</button>
+      <button @click="handleForwardClick" title="Вперед">Вперед</button>
+      <button @click="insertHeader" title="Заголовок">Заголовок</button>
+      <button @click="convertToParagraph" title="Абзац">Абзац</button>
+      <ImageUploadButton
+          @upload="handleImageUpload"
+          title="Загрузить изображение"
       />
-    </div>
-    <textarea
-        ref="textArea"
-        v-model="content"
-        @input="saveToHistory"
-        class="w-full h-64 p-2 border rounded"
-        placeholder="Начните вводить текст..."
-    />
+      <button @click="handleHtmlCopyClick">Копировать HTML</button>
+    </header>
+    <div id="editorjs"></div>
   </div>
 </template>
-<!--  <header class="header container">-->
-<!--    <div class="button-group">-->
-<!--      <IconButton @click="handleBackClick">-->
-<!--        <BackIcon/>-->
-<!--      </IconButton>-->
-<!--      <IconButton @click="handleForwardClick">-->
-<!--        <ForwardIcon/>-->
-<!--      </IconButton>-->
-<!--      <IconButton @click="handlerNonStyleClick">-->
-<!--        <TextIcon/>-->
-<!--      </IconButton>-->
-<!--      <IconButton @click="handleCapsClick">-->
-<!--        <CapsIcon/>-->
-<!--      </IconButton>-->
-<!--      <IconButton @click="handleImageUploadClick">-->
-<!--        <ImageIcon/>-->
-<!--      </IconButton>-->
-<!--      <TextButton @click="handleHtmlCopyClick">-->
-<!--      </TextButton>-->
-<!--    </div>-->
+<script>
+import EditorJS from '@editorjs/editorjs'
+import Header from '@editorjs/header'
+import ImageTool from '@editorjs/image'
+import ImageUploadButton from './components/buttons/ImageUploadButton.vue'
 
+export default {
+  components: {
+    ImageUploadButton
+  },
+  data() {
+    return {
+      editor: null,
+      history: [],
+      historyIndex: -1
+    }
+  },
+  mounted() {
+    this.initEditor()
+  },
+  methods: {
+    initEditor() {
+      this.editor = new EditorJS({
+        holder: 'editorjs',
+        placeholder: 'Начните писать здесь...',
+        tools: {
+          header: {
+            class: Header,
+            inlineToolbar: ['link']
+          },
+          image: {
+            class: ImageTool,
+            config: {
+              uploader: {
+                uploadByFile: this.uploadImage
+              }
+            }
+          }
+        },
+        onChange: this.saveToHistory
+      })
+    },
+    async saveToHistory() {
+      try {
+        const content = await this.editor.save()
 
+        // Усечение истории до текущего индекса
+        const newHistory = this.history.slice(0, this.historyIndex + 1)
+        newHistory.push(JSON.stringify(content))
 
-<!--  <main>-->
-<!--    <Main ref="mainComponent"/>-->
-<!--  </main>-->
+        this.history = newHistory
+        this.historyIndex = newHistory.length - 1
+      } catch (error) {
+        console.error('Saving failed', error)
+      }
+    },
+    async handleBackClick() {
+      if (this.historyIndex > 0) {
+        this.historyIndex--
+        await this.restoreFromHistory()
+      }
+    },
+    async handleForwardClick() {
+      if (this.historyIndex < this.history.length - 1) {
+        this.historyIndex++
+        await this.restoreFromHistory()
+      }
+    },
+    async restoreFromHistory() {
+      try {
+        const savedContent = JSON.parse(this.history[this.historyIndex])
+        await this.editor.render(savedContent)
+      } catch (error) {
+        console.error('Restoring from history failed', error)
+      }
+    },
+    async insertHeader() {
+      try {
+        const selection = await this.editor.save()
+        const blocks = selection.blocks
 
+        if (blocks.length > 0) {
+          const currentBlock = blocks[blocks.length - 1]
+
+          // Преобразуем последний блок в заголовок
+          await this.editor.blocks.update(currentBlock.id, {
+            type: 'header',
+            data: {
+              text: currentBlock.data.text,
+              level: 2
+            }
+          })
+        }
+      } catch (error) {
+        console.error('Insert header failed', error)
+      }
+    },
+    async convertToParagraph() {
+      try {
+        // Получаем текущий блок
+        const currentBlockIndex = this.editor.blocks.getCurrentBlockIndex()
+        if (currentBlockIndex === -1) return
+
+        const currentBlock = await this.editor.blocks.getBlockByIndex(currentBlockIndex)
+
+        // Проверяем, если блок является заголовком
+        if (currentBlock.name === 'header') {
+          // Преобразуем заголовок в параграф
+          await this.editor.blocks.update(currentBlock.id, {
+            type: 'paragraph',
+            data: {
+              text: currentBlock.data.text
+            }
+          })
+        }
+      } catch (error) {
+        console.error('Convert to paragraph failed', error)
+      }
+    },
+    async handleImageUpload(file) {
+      try {
+        const reader = new FileReader()
+        reader.onload = async (event) => {
+          await this.editor.blocks.insert('image', {
+            file: {
+              url: event.target.result
+            },
+            caption: file.name
+          })
+        }
+        reader.readAsDataURL(file)
+      } catch (error) {
+        console.error('Image upload failed', error)
+      }
+    },
+    async uploadImage(file) {
+      // Локальная загрузка изображения для демонстрации
+      return new Promise((resolve) => {
+        const reader = new FileReader()
+        reader.onload = (event) => {
+          resolve({
+            success: 1,
+            file: {
+              url: event.target.result
+            }
+          })
+        }
+        reader.readAsDataURL(file)
+      })
+    },
+    async handleHtmlCopyClick() {
+      try {
+        const content = await this.editor.save()
+        const htmlContent = this.convertToHtml(content)
+        await navigator.clipboard.writeText(htmlContent)
+      } catch (error) {
+        console.error('HTML copy failed', error)
+      }
+    },
+    convertToHtml(data) {
+      return data.blocks.map(block => {
+        switch (block.type) {
+          case 'header':
+            return `<h${block.data.level}>${block.data.text}</h${block.data.level}>`
+          case 'paragraph':
+            return `<p>${block.data.text}</p>`
+          case 'image':
+            return `<img src="${block.data.file.url}" alt="${block.data.caption || ''}" />`
+          default:
+            return ''
+        }
+      }).join('\n')
+    }
+  }
+}
+</script>
 
 <style scoped>
-.header {
-  padding-top: 77px;
+.editor-container {
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .button-group {
   display: flex;
-  gap: 12px;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 </style>
-<script setup>
-import { ref, nextTick } from 'vue'
-import { Undo2, Redo2, Heading2, Type, Image, Copy } from 'lucide-vue-next'
-
-const content = ref('')
-const history = ref([])
-const historyIndex = ref(-1)
-const textArea = ref(null)
-const imageInput = ref(null)
-
-const saveToHistory = () => {
-  const newHistory = history.value.slice(0, historyIndex.value + 1)
-  newHistory.push(content.value)
-  history.value = newHistory
-  historyIndex.value = newHistory.length - 1
-}
-
-const handleBackClick = () => {
-  if (historyIndex.value > 0) {
-    historyIndex.value--
-    content.value = history.value[historyIndex.value]
-  }
-}
-
-const handleForwardClick = () => {
-  if (historyIndex.value < history.value.length - 1) {
-    historyIndex.value++
-    content.value = history.value[historyIndex.value]
-  }
-}
-
-const insertHeader = () => {
-  const textarea = textArea.value
-  const start = textarea.selectionStart
-  const end = textarea.selectionEnd
-  const selectedText = content.value.substring(start, end)
-
-  content.value =
-      content.value.substring(0, start) +
-      `## ${selectedText}` +
-      content.value.substring(end)
-
-  saveToHistory()
-
-  nextTick(() => {
-    textarea.selectionStart = start + 3
-    textarea.selectionEnd = end + 3
-    textarea.focus()
-  })
-}
-
-const convertToParagraph = () => {
-  const textarea = textArea.value
-  const start = textarea.selectionStart
-  const end = textarea.selectionEnd
-  const selectedText = content.value.substring(start, end)
-
-  content.value =
-      content.value.substring(0, start) +
-      selectedText.replace(/^#+\s*/, '') +
-      content.value.substring(end)
-
-  saveToHistory()
-
-  nextTick(() => {
-    textarea.selectionStart = start
-    textarea.selectionEnd = end
-    textarea.focus()
-  })
-}
-
-const triggerImageUpload = () => {
-  imageInput.value.click()
-}
-
-const handleImageUpload = (e) => {
-  const file = e.target.files[0]
-  if (file) {
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      const textarea = textArea.value
-      const start = textarea.selectionStart
-
-      content.value =
-          content.value.substring(0, start) +
-          `\n![${file.name}](${event.target.result})\n` +
-          content.value.substring(start)
-
-      saveToHistory()
-    }
-    reader.readAsDataURL(file)
-  }
-}
-
-const handleHtmlCopyClick = () => {
-  const markdownToHtml = (markdown) => {
-    return markdown
-        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-        .replace(/!\[(.*?)\]\((.*?)\)/g, '<img alt="$1" src="$2" />')
-        .replace(/\n/g, '<br />')
-  }
-
-  const htmlContent = markdownToHtml(content.value)
-  navigator.clipboard.writeText(htmlContent)
-}
-</script>
