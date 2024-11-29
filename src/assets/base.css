@@ -21,6 +21,16 @@ body {
 .container{
     margin: 0 114px 0 107px ;
 }
+
+#editorjs{
+    font-family: "Roboto", serif;
+    font-size: 15px;
+    color: #EAEAEA;
+    h1,h2,h3,h4,h5{
+        font-size: 30px;
+    }
+}
+
 .hidden{
 
 }

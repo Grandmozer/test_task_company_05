@@ -1,15 +1,32 @@
 <template>
   <div class="editor-container">
     <header class="header button-group">
-      <button @click="handleBackClick" title="Назад">Назад</button>
-      <button @click="handleForwardClick" title="Вперед">Вперед</button>
-      <button @click="insertHeader" title="Заголовок">Заголовок</button>
-      <button @click="convertToParagraph" title="Абзац">Абзац</button>
+      <IconButton
+          @upload="handleBackClick"
+          title="Назад">
+        <BackIcon/>
+      </IconButton>
+      <IconButton
+          @upload="handleForwardClick"
+          title="Вперед">
+        <ForwardIcon/>
+      </IconButton>
+      <IconButton
+          @upload="insertHeader"
+          title="Заголовок">
+        <TextIcon/>
+      </IconButton>
+      <IconButton
+          @upload="convertToParagraph"
+          title="Абзац">
+        <CapsIcon/>
+      </IconButton>
       <ImageUploadButton
           @upload="handleImageUpload"
           title="Загрузить изображение"
       />
-      <button @click="handleHtmlCopyClick">Копировать HTML</button>
+      <TextButton  @click="handleHtmlCopyClick"></TextButton>
+
     </header>
     <div id="editorjs"></div>
   </div>
@@ -18,10 +35,22 @@
 import EditorJS from '@editorjs/editorjs'
 import Header from '@editorjs/header'
 import ImageTool from '@editorjs/image'
+import Paragraph from '@editorjs/paragraph'
+import IconButton from './components/buttons/IconButton.vue'
+import TextButton from './components/buttons/TextButton.vue'
 import ImageUploadButton from './components/buttons/ImageUploadButton.vue'
+import BackIcon from "@/components/icons/BackIcon.vue";
+import ForwardIcon from "@/components/icons/ForwardIcon.vue";
+import TextIcon from "@/components/icons/TextIcon.vue";
+import CapsIcon from "@/components/icons/CapsIcon.vue";
+
 
 export default {
   components: {
+    CapsIcon,
+    TextIcon,
+    ForwardIcon,
+    BackIcon,
     ImageUploadButton
   },
   data() {
@@ -51,10 +80,24 @@ export default {
                 uploadByFile: this.uploadImage
               }
             }
+          },
+          paragraph: {
+            class: Paragraph,
+            config: {
+              preserveBlank: true,
+              placeholder: 'Начните писать здесь...'
+            }
           }
         },
-        onChange: this.saveToHistory
+        onChange: this.saveToHistory,
+        onKeyDown: this.handleKeyDown
       })
+    },
+    handleKeyDown(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault()
+        return false
+      }
     },
     async saveToHistory() {
       try {
@@ -92,45 +135,57 @@ export default {
     },
     async insertHeader() {
       try {
-        const selection = await this.editor.save()
-        const blocks = selection.blocks
+        const currentBlockIndex = this.editor.blocks.getCurrentBlockIndex()
+        if (currentBlockIndex === -1) return
 
-        if (blocks.length > 0) {
-          const currentBlock = blocks[blocks.length - 1]
+        const savedData = await this.editor.save()
+        const currentBlock = savedData.blocks[currentBlockIndex]
 
-          // Преобразуем последний блок в заголовок
-          await this.editor.blocks.update(currentBlock.id, {
-            type: 'header',
-            data: {
-              text: currentBlock.data.text,
-              level: 2
-            }
-          })
-        }
+        if (!currentBlock) return
+
+        // Удаляем текущий блок и вставляем новый заголовок
+        await this.editor.blocks.delete(currentBlockIndex)
+        await this.editor.blocks.insert('header', {
+          text: currentBlock.data.text,
+          level: 2  // или любой другой уровень
+        }, {}, currentBlockIndex)
+
       } catch (error) {
-        console.error('Insert header failed', error)
+        console.error('Ошибка при создании заголовка:', error)
       }
     },
     async convertToParagraph() {
       try {
-        // Получаем текущий блок
         const currentBlockIndex = this.editor.blocks.getCurrentBlockIndex()
         if (currentBlockIndex === -1) return
 
-        const currentBlock = await this.editor.blocks.getBlockByIndex(currentBlockIndex)
+        const savedData = await this.editor.save()
+        const currentBlock = savedData.blocks[currentBlockIndex]
 
-        // Проверяем, если блок является заголовком
-        if (currentBlock.name === 'header') {
-          // Преобразуем заголовок в параграф
-          await this.editor.blocks.update(currentBlock.id, {
-            type: 'paragraph',
-            data: {
-              text: currentBlock.data.text
-            }
-          })
+        if (!currentBlock) return
+
+        const selection = window.getSelection()
+        const selectedText = selection.toString().trim()
+
+        let textToConvert = selectedText || currentBlock.data.text
+
+        // Очищаем текст от разметки заголовков
+        textToConvert = textToConvert.replace(/^#+\s*/, '')
+
+        if (!textToConvert) return
+
+        if (selectedText && selectedText !== currentBlock.data.text) {
+          const range = selection.getRangeAt(0)
+          const selectedContent = range.extractContents()
+
+          await this.editor.blocks.delete(currentBlockIndex)
+          await this.editor.blocks.insert('paragraph', { text: textToConvert }, {}, currentBlockIndex)
+        } else {
+          await this.editor.blocks.delete(currentBlockIndex)
+          await this.editor.blocks.insert('paragraph', { text: textToConvert }, {}, currentBlockIndex)
         }
       } catch (error) {
-        console.error('Convert to paragraph failed', error)
+        console.error('Ошибка при преобразовании в параграф:', error)
       }
     },
     async handleImageUpload(file) {
