@@ -1,23 +1,23 @@
 <template>
-  <div class="editor-container">
-    <header class="header button-group">
+  <div class="container">
+    <header class="header button-group content">
       <IconButton
-          @upload="handleBackClick"
+          @click="handleBackClick"
           title="Назад">
         <BackIcon/>
       </IconButton>
       <IconButton
-          @upload="handleForwardClick"
+          @click="handleForwardClick"
           title="Вперед">
         <ForwardIcon/>
       </IconButton>
       <IconButton
-          @upload="insertHeader"
+          @click="insertHeader"
           title="Заголовок">
         <TextIcon/>
       </IconButton>
       <IconButton
-          @upload="convertToParagraph"
+          @click="convertToParagraph"
           title="Абзац">
         <CapsIcon/>
       </IconButton>
@@ -26,32 +26,39 @@
           title="Загрузить изображение"
       />
       <TextButton  @click="handleHtmlCopyClick"></TextButton>
-
     </header>
-    <div id="editorjs"></div>
+    <div id="editorjs" class="content"></div>
   </div>
+
 </template>
 <script>
 import EditorJS from '@editorjs/editorjs'
 import Header from '@editorjs/header'
 import ImageTool from '@editorjs/image'
 import Paragraph from '@editorjs/paragraph'
+
 import IconButton from './components/buttons/IconButton.vue'
 import TextButton from './components/buttons/TextButton.vue'
 import ImageUploadButton from './components/buttons/ImageUploadButton.vue'
+
 import BackIcon from "@/components/icons/BackIcon.vue";
 import ForwardIcon from "@/components/icons/ForwardIcon.vue";
 import TextIcon from "@/components/icons/TextIcon.vue";
 import CapsIcon from "@/components/icons/CapsIcon.vue";
 
+import Img from "@/assets/img/image.jpg"
+
 
 export default {
   components: {
-    CapsIcon,
-    TextIcon,
-    ForwardIcon,
+    IconButton,
+    TextButton,
+    ImageUploadButton,
     BackIcon,
-    ImageUploadButton
+    ForwardIcon,
+    TextIcon,
+    CapsIcon,
+    Img
   },
   data() {
     return {
@@ -85,9 +92,42 @@ export default {
             class: Paragraph,
             config: {
               preserveBlank: true,
+              inlineToolbar: true,
               placeholder: 'Начните писать здесь...'
             }
           }
+        },
+        data: {
+          blocks: [
+            {
+              type: 'paragraph',
+              data: {
+                text: 'Таким образом консультация с широким активом представляет собой интересный эксперимент проверки позиций, занимаемых участниками в отношении поставленных задач. С другой стороны постоянное информационно-пропагандистское обеспечение нашей деятельности представляет собой интересный эксперимент проверки форм развития. Идейные соображения высшего порядка, а также укрепление и развитие структуры влечет за собой процесс внедрения и модернизации соответствующий условий активизации. Задача организации, в особенности же реализация намеченных плановых заданий играет важную роль в формировании дальнейших направлений развития. Повседневная практика показывает, что постоянное информационно-пропагандистское обеспечение нашей деятельности играет важную роль в формировании существенных финансовых и административных условий.',
+              },
+            },
+            {
+              type: 'header',
+              data: {
+                text: 'Смотрите какие обезьянки',
+              },
+            },
+            {
+              type: 'image',
+              data: {
+                file: {
+                  url: Img, // Правильный путь к изображению
+                },
+                withBorder: false, // Показывать рамку вокруг изображения
+                withBackground: false, // Показывать фон для изображения
+                stretched: false, // Растягивать изображение на ширину контейнера
+              }},
+            {
+              type: 'paragraph',
+              data: {
+                text: 'Таким образом консультация с широким активом представляет собой интересный эксперимент проверки позиций, занимаемых участниками в отношении поставленных задач. С другой стороны постоянное информационно-пропагандистское обеспечение нашей деятельности представляет собой интересный эксперимент проверки форм развития. Идейные соображения высшего порядка, а также укрепление и развитие структуры влечет за собой процесс внедрения и модернизации соответствующий условий активизации. Задача организации, в особенности же реализация намеченных плановых заданий играет важную роль в формировании дальнейших направлений развития. Повседневная практика показывает, что постоянное информационно-пропагандистское обеспечение нашей деятельности играет важную роль в формировании существенных финансовых и административных условий.',
+              },
+            },
+          ],
         },
         onChange: this.saveToHistory,
         onKeyDown: this.handleKeyDown
@@ -114,7 +154,7 @@ export default {
       }
     },
     async handleBackClick() {
-      if (this.historyIndex > 0) {
+        if (this.historyIndex > 0) {
         this.historyIndex--
         await this.restoreFromHistory()
       }
@@ -247,9 +287,8 @@ export default {
 </script>
 
 <style scoped>
-.editor-container {
-  max-width: 800px;
-  margin: 0 auto;
+.header{
+  padding-top: 77px;
 }
 
 .button-group {
