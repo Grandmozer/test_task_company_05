@@ -10,5 +10,9 @@
 .text-btn{
   color: #639EFF;
   background: transparent;font-family: Roboto;
+  
+  @media screen and (max-width: 651px) {
+    font-size: 14px;
+  }
 }
 </style>
